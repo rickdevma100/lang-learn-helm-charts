@@ -1,0 +1,22 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lang-learn-inference
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    release: monitoring
+    {{- include "inference.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      serving.kserve.io/inferenceservice: lang-learn-inference
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace | default .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+{{- end }}

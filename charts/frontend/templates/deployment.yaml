@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    app: frontend
+    {{- include "frontend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+        {{- include "frontend.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy | default "Always" }}
+          ports:
+            - containerPort: {{ .Values.frontend.port | default 3000 }}
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: {{ .Values.apiUrl | default (printf "http://lang-learn-inference-predictor.%s.svc.cluster.local" (.Values.namespace | default .Release.Namespace)) | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

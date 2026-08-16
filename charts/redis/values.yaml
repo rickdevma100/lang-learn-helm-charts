@@ -1,0 +1,15 @@
+name: redis-stack
+redis_stack:
+  image: "redis/redis-stack"
+  tag: "7.4.0-v8"
+  redis_insight: "redis-insight"
+  redis_insight_port: 8001
+  redis_server_port: 6379
+  replicas: 1
+  memory: 1Gi
+  cpu: 500m
+  affinity: {}
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: microk8s-hostpath
