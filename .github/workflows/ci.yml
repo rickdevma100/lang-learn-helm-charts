@@ -56,8 +56,8 @@ jobs:
         run: |
           for chart in charts/*; do
             if [ -d "$chart" ]; then
-              CHART_NAME=$(basename "$chart")
-              CHART_VERSION=$(yq '.version' "$chart/Chart.yaml")
+              CHART_NAME=$(helm show chart "$chart" | grep -E "^name:" | awk '{print $2}')
+              CHART_VERSION=$(helm show chart "$chart" | grep -E "^version:" | awk '{print $2}')
               echo "Packaging $CHART_NAME version $CHART_VERSION..."
               helm package "$chart" --version "$CHART_VERSION"
               helm push "${CHART_NAME}-${CHART_VERSION}.tgz" "oci://${{ env.REGISTRY }}/${{ env.PROJECT }}/charts"

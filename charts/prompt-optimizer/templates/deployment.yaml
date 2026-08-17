@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "prompt-optimizer.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ if and .Values.optimizer .Values.optimizer.replicas }}{{ .Values.optimizer.replicas }}{{ else }}{{ .Values.replicaCount | default 1 }}{{ end }}
   selector:
     matchLabels:
       {{- include "prompt-optimizer.selectorLabels" . | nindent 6 }}
@@ -18,10 +18,10 @@ spec:
       serviceAccountName: prompt-optimizer
       containers:
         - name: prompt-optimizer
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ if and .Values.optimizer .Values.optimizer.image }}{{ .Values.optimizer.image.repository | default .Values.image.repository }}:{{ .Values.optimizer.image.tag | default .Values.image.tag }}{{ else }}{{ .Values.image.repository }}:{{ .Values.image.tag }}{{ end }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
           ports:
-            - containerPort: {{ .Values.service.port }}
+            - containerPort: {{ .Values.service.port | default 8000 }}
               protocol: TCP
 
           envFrom:
