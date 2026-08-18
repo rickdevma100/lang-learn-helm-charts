@@ -51,21 +51,21 @@ spec:
             readOnly: true
         startupProbe:
           httpGet:
-            path: /healthz
+            path: /livez
             port: 3000
           initialDelaySeconds: 10
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: /readyz
             port: 3000
           initialDelaySeconds: 5
           periodSeconds: 10
           failureThreshold: 3
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: /livez
             port: 3000
           initialDelaySeconds: 10
           periodSeconds: 30
