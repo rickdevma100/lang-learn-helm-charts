@@ -65,7 +65,7 @@ inference:
     quantization: none
     useFlashAttention: true
 
-  nThreads: 6
+  nThreads: 4
 
   resources:
     requests:
