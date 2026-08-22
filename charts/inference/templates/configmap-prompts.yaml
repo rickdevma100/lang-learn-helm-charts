@@ -6,11 +6,7 @@ metadata:
   labels:
     {{- include "inference.labels" . | nindent 4 }}
 data:
-  image_describe.txt: |
-    {{- .Values.prompts.image_describe | nindent 4 }}
-  scenario_dialogue.txt: |
-    {{- .Values.prompts.scenario_dialogue | nindent 4 }}
-  explain_word.txt: |
-    {{- .Values.prompts.explain_word | nindent 4 }}
-  practice_check.txt: |
-    {{- .Values.prompts.practice_check | nindent 4 }}
+  {{- range $key, $value := .Values.prompts }}
+  {{ $key }}.txt: |
+    {{- $value | nindent 4 }}
+  {{- end }}
