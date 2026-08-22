@@ -287,79 +287,85 @@ prompts:
 
   exam_lesen_teil1: |
     You are creating official Goethe-Zertifikat A2 Reading Exam (Lesen Teil 1) materials.
-    Generate a concise A2 German newspaper article (60-80 words) with 5 multiple-choice questions (options a, b, c).
+    Generate an authentic, rich German newspaper/magazine article (180–220 words) with 4 structured paragraphs, character story or interview with quotes, and 5 multiple-choice questions (options a, b, c).
+
     Return ONLY a valid JSON object without markdown fences:
     {
-      "title": "German Article Title",
-      "text": "Full article text in German (60-80 words)...",
+      "title": "German Article Title with Subheading (e.g. Der TV-Koch Stefan Berger: »Ich versuche immer wieder etwas Neues.«)",
+      "text": "Full article text in German (180–220 words) with 4 well-structured paragraphs...",
       "items": [
-        {"id": 1, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "a", "explanation": "Short reason"},
-        {"id": 2, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "b", "explanation": "Short reason"},
-        {"id": 3, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "c", "explanation": "Short reason"},
-        {"id": 4, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "a", "explanation": "Short reason"},
-        {"id": 5, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "b", "explanation": "Short reason"}
+        {"id": 1, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "b", "explanation": "Detailed German explanation referencing specific sentence in the text."},
+        {"id": 2, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "b", "explanation": "Detailed German explanation referencing specific sentence in the text."},
+        {"id": 3, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "c", "explanation": "Detailed German explanation referencing specific sentence in the text."},
+        {"id": 4, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "a", "explanation": "Detailed German explanation referencing specific sentence in the text."},
+        {"id": 5, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "a", "explanation": "Detailed German explanation referencing specific sentence in the text."}
       ]
     }
 
   exam_lesen_teil2: |
     You are creating official Goethe-Zertifikat A2 Reading Exam (Lesen Teil 2) materials.
-    Generate a shopping directory with 4-5 floors and 5 situational questions (numbered 6 to 10) with options a, b, c.
+    Generate a comprehensive German department store floor directory (5–6 floors: 4. Stock, 3. Stock, 2. Stock, 1. Stock, EG, UG) with 10–15 detailed departments/items per floor, and 5 realistic customer situation questions (numbered 6 to 10) with 3 choices each (options a, b, c, where one option is often "Anderes Stockwerk").
+
     Return ONLY a valid JSON object without markdown fences:
     {
-      "title": "Kaufhaus-Wegweiser",
+      "title": "Kaufhaus Alexa / City-Center Wegweiser",
       "directory": [
-        {"floor": "2. Stock", "departments": "Kinderkleidung, Sportartikel"},
-        {"floor": "1. Stock", "departments": "Damen- und Herrenmode, Schuhe"},
-        {"floor": "Erdgeschoss", "departments": "Parfümerie, Uhren, Schmuck"},
-        {"floor": "Untergeschoss", "departments": "Lebensmittel, Haushaltswaren"}
+        {"floor": "4. Stock", "departments": "Bücher, Geschenke, Spielsachen, Freizeittaschen, Koffer, Brieftaschen, Café, Friseur, Kunden-WC"},
+        {"floor": "3. Stock", "departments": "Handys, Telefone, Fernseher, Computer, Tablets, Software, Drucker, CDs, Videospiele, Sportkleidung"},
+        {"floor": "2. Stock", "departments": "Herrenmode, Nachtwäsche für ihn, Möbel für Wohnzimmer, Bad und Küche, Teppiche, Lampen, Gardinen, Handtücher"},
+        {"floor": "1. Stock", "departments": "Damenmode, Nachtwäsche für sie, Kindermode, Babybekleidung, Schuhe, Geschirr, Gläser, Töpfe und Pfannen"},
+        {"floor": "Erdgeschoss (EG)", "departments": "Information, Uhren, Schmuck, Parfüm, Kosmetik, Schreibwaren, Reiseführer, Schlüsseldienst, Blumenladen"},
+        {"floor": "Untergeschoss (UG)", "departments": "Bäcker, Supermarkt, Waschmittel, Fotoservice, Zeitschriften, Theaterkarten, Reisebüro, Geldautomat"}
       ],
       "items": [
-        {"id": 6, "question": "Customer need in German?", "options": {"a": "1. Stock", "b": "2. Stock", "c": "Anderes Stockwerk"}, "answer_key": "b", "explanation": "Short reason"},
-        {"id": 7, "question": "Customer need in German?", "options": {"a": "Erdgeschoss", "b": "1. Stock", "c": "Untergeschoss"}, "answer_key": "a", "explanation": "Short reason"},
-        {"id": 8, "question": "Customer need in German?", "options": {"a": "Untergeschoss", "b": "2. Stock", "c": "1. Stock"}, "answer_key": "a", "explanation": "Short reason"},
-        {"id": 9, "question": "Customer need in German?", "options": {"a": "1. Stock", "b": "Erdgeschoss", "c": "Anderes Stockwerk"}, "answer_key": "b", "explanation": "Short reason"},
-        {"id": 10, "question": "Customer need in German?", "options": {"a": "2. Stock", "b": "1. Stock", "c": "Untergeschoss"}, "answer_key": "c", "explanation": "Short reason"}
+        {"id": 6, "question": "Customer scenario in German?", "options": {"a": "1. Stock", "b": "2. Stock", "c": "Anderes Stockwerk"}, "answer_key": "a", "explanation": "Detailed explanation of which floor contains the needed item."},
+        {"id": 7, "question": "Customer scenario in German?", "options": {"a": "3. Stock", "b": "Erdgeschoss", "c": "4. Stock"}, "answer_key": "a", "explanation": "Detailed explanation of which floor contains the needed item."},
+        {"id": 8, "question": "Customer scenario in German?", "options": {"a": "1. Stock", "b": "4. Stock", "c": "Anderes Stockwerk"}, "answer_key": "b", "explanation": "Detailed explanation of which floor contains the needed item."},
+        {"id": 9, "question": "Customer scenario in German?", "options": {"a": "2. Stock", "b": "1. Stock", "c": "Untergeschoss"}, "answer_key": "a", "explanation": "Detailed explanation of which floor contains the needed item."},
+        {"id": 10, "question": "Customer scenario in German?", "options": {"a": "Erdgeschoss", "b": "3. Stock", "c": "4. Stock"}, "answer_key": "c", "explanation": "Detailed explanation of which floor contains the needed item."}
       ]
     }
 
   exam_lesen_teil3: |
     You are creating official Goethe-Zertifikat A2 Reading Exam (Lesen Teil 3) materials.
-    Generate a concise personal email (60-80 words) with 5 multiple-choice questions (numbered 11 to 15) with options a, b, c.
+    Generate an authentic, rich personal German email (200–250 words) with 4–5 paragraphs describing real life situations (e.g. studying in a new city, shared flat life, language courses, daily routine, visiting plans), and 5 multiple-choice questions (numbered 11 to 15) with 3 choices each (options a, b, c).
+
     Return ONLY a valid JSON object without markdown fences:
     {
-      "sender": "Anna",
-      "recipient": "Markus",
-      "subject": "Email Subject",
-      "text": "Lieber Markus,\nText in German (60-80 words)...\nViele Grüße,\nAnna",
+      "sender": "Gülcan / Anna",
+      "recipient": "Sonja / Markus",
+      "subject": "Neuigkeiten aus Hamburg / Meine neue Wohnung",
+      "text": "Liebe Sonja,\n\nich bin jetzt schon vier Wochen in Hamburg und...\n[Full authentic email in German with 200–250 words across 4–5 paragraphs]\n\nSchreib mir bald!\nBis dann,\nGülcan",
       "items": [
-        {"id": 11, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "a", "explanation": "Short reason"},
-        {"id": 12, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "b", "explanation": "Short reason"},
-        {"id": 13, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "c", "explanation": "Short reason"},
-        {"id": 14, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "a", "explanation": "Short reason"},
-        {"id": 15, "question": "Short question?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "b", "explanation": "Short reason"}
+        {"id": 11, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "b", "explanation": "Detailed explanation referencing specific paragraph."},
+        {"id": 12, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "a", "explanation": "Detailed explanation referencing specific paragraph."},
+        {"id": 13, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "c", "explanation": "Detailed explanation referencing specific paragraph."},
+        {"id": 14, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "a", "explanation": "Detailed explanation referencing specific paragraph."},
+        {"id": 15, "question": "Question in German?", "options": {"a": "Option A", "b": "Option B", "c": "Option C"}, "answer_key": "b", "explanation": "Detailed explanation referencing specific paragraph."}
       ]
     }
 
   exam_lesen_teil4: |
     You are creating official Goethe-Zertifikat A2 Reading Exam (Lesen Teil 4) materials.
-    Generate 6 short classified ads (a to f) and 5 people (16 to 20) matching ads (answer_key is 'a'-'f' or 'x' for none).
+    Generate 6 detailed German online classified ads/website boxes (labeled a to f) with website URLs, realistic details (opening hours, phone numbers, prices, services), and 5 specific person scenarios (numbered 16 to 20) matching one ad (answer_key is 'a', 'b', 'c', 'd', 'e', 'f', or 'x' for no matching ad).
+
     Return ONLY a valid JSON object without markdown fences:
     {
-      "title": "Anzeigen und Personen",
+      "title": "Lokale und Anzeigen im Internet",
       "ads": [
-        {"id": "a", "title": "Gitarrenunterricht", "text": "Musiklehrer gibt Gitarrenunterricht. Tel: 0176-112233"},
-        {"id": "b", "title": "Yoga im Park", "text": "Yoga jeden Dienstag um 8 Uhr. Info: yoga@web.de"},
-        {"id": "c", "title": "Spanischkurs", "text": "Abendkurs Spanisch A1. www.lingua.de"},
-        {"id": "d", "title": "Fahrrad zu verkaufen", "text": "Citybike 7 Gänge, 90 Euro. Tel: 0151-998877"},
-        {"id": "e", "title": "Möblierte Wohnung", "text": "2-Zimmer-Wohnung, 700 Euro. info@wohnen.de"},
-        {"id": "f", "title": "Kochkurs Pasta", "text": "Italienischer Kochkurs am Samstag. www.kochkurs.de"}
+        {"id": "a", "title": "www.park-cafe.de", "text": "Selbstgemachte Torten, Kuchen und italienisches Eis. Große Sonnenterrasse mit Spielplatz. Alles auch zum Mitnehmen! Täglich außer montags von 14 bis 19 Uhr geöffnet. Bergstraße 7, Tel. 08221 36152"},
+        {"id": "b", "title": "www.feine-speisen.de", "text": "Egal, wo Sie feiern wollen, wir liefern für Ihre Hochzeit oder private Feiern bestes Essen. Hochzeitsmenü ab 30 € p. P. Tische, Stühle, Dekoration und Servicepersonal verfügbar."},
+        {"id": "c", "title": "www.weinhaus-walter.de", "text": "Internationale Spezialitäten. Beste Weine. 3-Gänge-Menü mit Getränk ab 20 € pro Person. Im Sommer ruhiger Garten direkt hinter dem Rathaus. Schöner Raum für kleine Feiern."},
+        {"id": "d", "title": "www.cafe-sand.de", "text": "Urlaub in der Stadtmitte – direkt am Fluss, täglich ab 10.00 Uhr geöffnet. Großes Frühstück am Wochenende. Samstag Party mit Live-Musik ab 22 Uhr. Tel. 785 43 65."},
+        {"id": "e", "title": "www.towabu.de", "text": "Spiel + Spaß bei Towabu. Auf über 2500 qm auch bei schlechtem Wetter spielen und toben! Tolle Geburtstagspartys mit Programm. Getränke inklusive. Täglich 10 bis 20 Uhr."},
+        {"id": "f", "title": "www.hansen-im-moor.de", "text": "Das Ausflugsrestaurant im Teufelsmoor. Nur 20 Minuten vom Zentrum! Norddeutsche Küche mit Terrasse am See. Räume für Familienfeste, Hochzeiten bis 150 Personen."}
       ],
       "items": [
-        {"id": 16, "person": "Person wants Spanish course.", "answer_key": "c", "explanation": "Short reason"},
-        {"id": 17, "person": "Person wants a cheap bicycle.", "answer_key": "d", "explanation": "Short reason"},
-        {"id": 18, "person": "Person wants to learn cooking.", "answer_key": "f", "explanation": "Short reason"},
-        {"id": 19, "person": "Person wants guitar lessons.", "answer_key": "a", "explanation": "Short reason"},
-        {"id": 20, "person": "Person wants swimming lessons.", "answer_key": "x", "explanation": "Short reason"}
+        {"id": 16, "person": "Sarah heiratet bald und möchte mit vielen Gästen in einem Lokal feiern.", "answer_key": "f", "explanation": "Anzeige F (Hansen im Moor) bietet Räume für Hochzeiten mit bis zu 150 Personen."},
+        {"id": 17, "person": "Petra will mit Geschäftspartnern in der Stadt essen gehen und über die Arbeit sprechen.", "answer_key": "c", "explanation": "Anzeige C (Weinhaus Walter) bietet ruhigen Garten und Menüs direkt hinter dem Rathaus."},
+        {"id": 18, "person": "Jens feiert seinen Geburtstag zu Hause und möchte guten Wein anbieten.", "answer_key": "x", "explanation": "Keine Anzeige liefert Wein nach Hause, daher ist die Antwort 'x'."},
+        {"id": 19, "person": "Karsten lädt am Abend Gäste zu sich nach Hause ein, möchte aber nicht kochen.", "answer_key": "b", "explanation": "Anzeige B (Feine Speisen) liefert Essen nach Hause für private Feiern."},
+        {"id": 20, "person": "Gabriele und ihre Tochter feiern Kindergeburtstag und möchten Kuchen essen gehen.", "answer_key": "a", "explanation": "Anzeige A (Park-Café) bietet selbstgemachte Torten, Kuchen und Spielplatz."}
       ]
     }
 
