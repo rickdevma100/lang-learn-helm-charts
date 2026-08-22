@@ -65,6 +65,8 @@ inference:
     quantization: none
     useFlashAttention: true
 
+  nThreads: 6
+
   resources:
     requests:
       memory: "4Gi"
