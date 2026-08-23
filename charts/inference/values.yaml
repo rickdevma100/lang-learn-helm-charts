@@ -65,8 +65,6 @@ inference:
     quantization: none
     useFlashAttention: true
 
-  examModel:
-    path: /app/models/gemma-q4/gemma-4-E4B-it-Q4_K_M.gguf
 
   nThreads: 4
 

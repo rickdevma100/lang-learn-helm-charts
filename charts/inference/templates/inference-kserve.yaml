@@ -23,8 +23,6 @@ spec:
         env:
           - name: LANG_LEARN_MODEL_PATH
             value: {{ .Values.inference.model.path | quote }}
-          - name: LANG_LEARN_EXAM_MODEL_PATH
-            value: {{ .Values.inference.examModel.path | quote }}
           - name: BACKEND
             value: "llamacpp"
           - name: LANG_LEARN_N_THREADS
