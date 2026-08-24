@@ -37,6 +37,10 @@ spec:
             value: "6379"
           - name: EXTERNAL_LLM_URL
             value: {{ default "http://192.168.2.1:9090" .Values.inference.externalLlm.url | quote }}
+          - name: EXPLAIN_WORD_BACKEND
+            value: {{ default "external" .Values.inference.externalLlm.explainWordBackend | quote }}
+          - name: DIALOGUE_BACKEND
+            value: {{ default "external" .Values.inference.externalLlm.dialogueBackend | quote }}
         resources:
           requests:
             memory: {{ .Values.inference.resources.requests.memory | quote }}
