@@ -2,7 +2,7 @@ apiVersion: v2
 name: inference
 description: Gemma LLM Inference Service, Model Loader, and Alerting for Lang-Learn
 type: application
-version: 0.2.0
+version: 0.2.1
 appVersion: "1.1.0"
 
 dependencies:

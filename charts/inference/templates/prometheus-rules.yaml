@@ -28,13 +28,12 @@ spec:
               sum by (namespace) (rate(lang_learn_cefr_mismatches_total[1h]))
               /
               sum by (namespace) (rate(lang_learn_requests_total[1h]))
-            ) > 0.20
-          for: 15m
+            ) > 0.75
+          for: 1h
           labels:
             severity: warning
-            action: optimize_prompt
           annotations:
-            summary: "High CEFR mismatch rate — more than 20% of responses miss the target level"
+            summary: "High CEFR mismatch rate — more than 75% of responses miss the target level"
             description: "Mismatch rate = {{ "{{ $value | humanizePercentage }}" }}."
 
         - alert: UserFeedbackNegative
