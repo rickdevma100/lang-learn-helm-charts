@@ -21,10 +21,12 @@ spec:
             containerPort: 3000
             protocol: TCP
         env:
+          {{- if .Values.inference.model.path }}
           - name: LANG_LEARN_MODEL_PATH
             value: {{ .Values.inference.model.path | quote }}
+          {{- end }}
           - name: BACKEND
-            value: "llamacpp"
+            value: {{ default "external" .Values.inference.backend | quote }}
           - name: LANG_LEARN_N_THREADS
             value: {{ default "6" .Values.inference.nThreads | quote }}
           - name: PROMPTS_DIR

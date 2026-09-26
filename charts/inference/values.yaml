@@ -59,11 +59,11 @@ inference:
 
   scaleTarget: 1
 
+  backend: "external"
+
   model:
-    path: /app/models/gemma-q4/google_gemma-4-E2B-it-Q4_K_M.gguf
+    path: ""
     dtype: bfloat16
-    quantization: none
-    useFlashAttention: true
 
   externalLlm:
     url: "http://192.168.2.1:9090"
@@ -74,11 +74,11 @@ inference:
 
   resources:
     requests:
-      memory: "8Gi"
-      cpu: "2"
+      memory: "1.5Gi"
+      cpu: "500m"
     limits:
-      memory: "14Gi"
-      cpu: "4"
+      memory: "3Gi"
+      cpu: "2"
 
 # ---------------------------------------------------------------------------
 # Ingress

@@ -74,22 +74,9 @@ spec:
                 echo "multilingual-e5-small already exists on PVC, skipping."
               fi
 
-              if [ ! -f "/models/gemma-q4/gemma-4-E4B-it-Q4_K_M.gguf" ]; then
-                echo "Pulling gemma-q4..."
-                dvc pull models/gemma-q4.dvc
-                mkdir -p /models/gemma-q4
-                cp -rv models/gemma-q4/* /models/gemma-q4/
-                rm -rf .dvc/cache/*
-              else
-                echo "gemma-q4 already exists on PVC, skipping."
-              fi
-
-              if [ ! -f "/models/gemma-q4/google_gemma-4-E2B-it-Q4_K_M.gguf" ]; then
-                echo "Pulling google_gemma-4-E2B-it-Q4_K_M.gguf from Hugging Face..."
-                python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='bartowski/google_gemma-4-E2B-it-GGUF', filename='google_gemma-4-E2B-it-Q4_K_M.gguf', local_dir='/models/gemma-q4', local_dir_use_symlinks=False)"
-              else
-                echo "google_gemma-4-E2B-it-Q4_K_M.gguf already exists on PVC, skipping."
-              fi
+              # NOTE: Gemma GGUF models are no longer loaded in-cluster.
+              # All LLM inference is offloaded to the external Mac-native
+              # Metal-accelerated llama-server (BACKEND=external).
 
               echo "Cleaning up workspace..."
               cd /models
