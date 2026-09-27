@@ -34,7 +34,7 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
-              pip install --quiet mlflow=={{ .Values.mlflow.version }} psycopg2-binary &&
+              pip install --quiet mlflow=={{ .Values.mlflow.version }} psycopg2-binary "sqlalchemy<2.1" &&
               mlflow server \
                 --backend-store-uri "postgresql://{{ .Values.postgres.user }}:$(POSTGRES_PASSWORD)@mlflow-postgres:5432/{{ .Values.postgres.database }}" \
                 --default-artifact-root {{ .Values.mlflow.artifactRoot }} \
