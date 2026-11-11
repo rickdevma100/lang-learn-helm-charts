@@ -26,4 +26,16 @@ spec:
                 name: frontend
                 port:
                   number: {{ .Values.service.port | default 80 }}
+    {{- range .Values.ingress.extraHosts }}
+    - host: {{ . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: {{ $.Values.service.port | default 80 }}
+    {{- end }}
 {{- end }}

@@ -18,6 +18,8 @@ ingress:
   enabled: true
   ingressClassName: public
   host: langlearn.local
+  extraHosts:
+    - embellish-poet-unwashed.ngrok-free.dev
 
 apiUrl: "http://lang-learn-inference-predictor.lang-learn.svc.cluster.local"
 
