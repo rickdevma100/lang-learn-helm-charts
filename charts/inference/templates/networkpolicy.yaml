@@ -111,6 +111,11 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: monitoring
+        # Allow multi-tenant school-silo workloads (app.kubernetes.io/part-of=lang-learn) across namespaces
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: lang-learn
       ports:
         - protocol: TCP
           port: 3000
