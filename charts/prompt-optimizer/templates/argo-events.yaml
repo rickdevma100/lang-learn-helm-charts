@@ -38,6 +38,17 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: argoproj.io/v1alpha1
+kind: EventBus
+metadata:
+  name: default
+  namespace: {{ $eventsNs }}
+  labels:
+    {{- include "prompt-optimizer.labels" . | nindent 4 }}
+spec:
+  jetstream:
+    version: latest
+---
+apiVersion: argoproj.io/v1alpha1
 kind: EventSource
 metadata:
   name: alertmanager

@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lang-learn-api
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    app: lang-learn-api
+    {{- include "school-silo.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: lang-learn-api
+  template:
+    metadata:
+      labels:
+        app: lang-learn-api
+        {{- include "school-silo.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: school-api-sa
+      automountServiceAccountToken: false
+      containers:
+        - name: lang-learn-api
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+          imagePullPolicy: {{ .Values.api.image.pullPolicy | default "Always" }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.api.port | default 8000 }}
+              protocol: TCP
+          env:
+            - name: TENANT_NAMESPACE
+              value: {{ .Values.namespace | default .Release.Namespace | quote }}
+            - name: REDIS_HOST
+              value: {{ printf "redis-stack.%s.svc.cluster.local" (.Values.namespace | default .Release.Namespace) | quote }}
+            - name: REDIS_PORT
+              value: "6379"
+            - name: PROMPTS_DIR
+              value: "/etc/prompts"
+            - name: SHARED_INFERENCE_URL
+              value: {{ .Values.sharedPlatform.inferenceUrl | quote }}
+            - name: EXTERNAL_LLM_URL
+              value: {{ .Values.sharedPlatform.externalLlmUrl | quote }}
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.api.port | default 8000 }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.api.port | default 8000 }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          volumeMounts:
+            - name: school-prompts
+              mountPath: /etc/prompts
+              readOnly: true
+      volumes:
+        - name: school-prompts
+          configMap:
+            name: prompts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lang-learn-api
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    app: lang-learn-api
+    {{- include "school-silo.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: lang-learn-api
+  ports:
+    - name: http
+      port: {{ .Values.api.port | default 8000 }}
+      targetPort: {{ .Values.api.port | default 8000 }}
+      protocol: TCP
+---
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lang-learn-api
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    release: monitoring
+    {{- include "school-silo.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: lang-learn-api
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace | default .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+{{- end }}

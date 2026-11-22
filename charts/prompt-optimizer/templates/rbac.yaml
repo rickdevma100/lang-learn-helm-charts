@@ -11,13 +11,17 @@ rules:
     resources: ["configmaps"]
     resourceNames: ["prompts"]
     verbs: ["get", "patch"]
-  # 2. Required by Argo Workflows executor to report task outputs & status
+  # 2. Required by Argo Workflows executor to report task outputs, status & S3 artifacts
   - apiGroups: ["argoproj.io"]
     resources: ["workflowtaskresults"]
     verbs: ["create", "patch"]
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "patch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["dvc-credentials"]
+    verbs: ["get"]
   {{- if and .Values.legacyDeployment .Values.legacyDeployment.enabled }}
   # Legacy mode only: allow restarting inference deployment
   - apiGroups: ["apps"]

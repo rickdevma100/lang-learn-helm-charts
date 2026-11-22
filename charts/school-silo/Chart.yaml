@@ -1,0 +1,6 @@
+apiVersion: v2
+name: school-silo
+description: Multi-tenant per-school isolated silo stack (Frontend, Core API, Redis, Prompts, Quotas, NetPol, Exam CronWorkflow)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

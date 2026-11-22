@@ -1,0 +1,50 @@
+{{- if .Values.cronWorkflow.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: nightly-exam-replenisher
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "school-silo.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronWorkflow.schedule | default "0 2 * * *" | quote }}
+  concurrencyPolicy: "Forbid"
+  workflowSpec:
+    serviceAccountName: school-workflow-sa
+    synchronization:
+      semaphore:
+        configMapKeyRef:
+          name: {{ .Values.sharedPlatform.semaphoreConfigMap | default "workflow-synchronization-limits" }}
+          key: llm-batch-lock
+    entrypoint: check-and-replenish
+    templates:
+      - name: check-and-replenish
+        container:
+          image: {{ .Values.cronWorkflow.inferenceImage | default "ghcr.io/rickdevma100/inference:latest" | quote }}
+          command: [python, -c]
+          env:
+            - name: REDIS_HOST
+              value: {{ printf "redis-stack.%s.svc.cluster.local" (.Values.namespace | default .Release.Namespace) | quote }}
+            - name: REDIS_PORT
+              value: "6379"
+            - name: EXTERNAL_LLM_URL
+              value: {{ .Values.sharedPlatform.externalLlmUrl | quote }}
+          args:
+            - |
+              import asyncio
+              from src.exam.orchestrator import ExamOrchestrator
+
+              orch = ExamOrchestrator()
+              target_min = int("{{ .Values.cronWorkflow.minPendingPapers | default 5 }}")
+              target_level = "{{ .Values.cronWorkflow.targetLevel | default "A2" }}"
+
+              async def replenish():
+                  for mod in ("lesen", "schreiben"):
+                      pending = orch.list_saved_papers(module=mod, status="pending", limit=10)
+                      needed = max(0, target_min - len(pending))
+                      print(f"[{mod}] Pending papers: {len(pending)}, generating: {needed}")
+                      for _ in range(needed):
+                          await orch.generate_paper(module=mod, level=target_level)
+
+              asyncio.run(replenish())
+{{- end }}

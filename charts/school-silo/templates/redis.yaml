@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-stack-data
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    app: redis-stack
+    {{- include "school-silo.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.redis.storageClass | default "microk8s-hostpath" }}
+  resources:
+    requests:
+      storage: {{ .Values.redis.storageSize | default "5Gi" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-stack
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    app: redis-stack
+    {{- include "school-silo.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-stack
+  template:
+    metadata:
+      labels:
+        app: redis-stack
+        {{- include "school-silo.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: redis-sa
+      automountServiceAccountToken: false
+      containers:
+        - name: redis-stack
+          image: "{{ .Values.redis.image }}:{{ .Values.redis.tag }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6379
+              name: db
+            - containerPort: 8001
+              name: redis-insight
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-stack-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-stack
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    app: redis-stack
+    {{- include "school-silo.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: redis-stack
+  ports:
+    - name: db
+      port: 6379
+      targetPort: 6379
+    - name: redis-insight
+      port: 8001
+      targetPort: 8001

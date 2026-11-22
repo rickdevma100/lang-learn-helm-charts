@@ -1,0 +1,100 @@
+namespace: school-default
+
+ingress:
+  enabled: true
+  ingressClassName: public
+  host: school.langlearn.local
+
+frontend:
+  image:
+    repository: ghcr.io/rickdevma100/frontend
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+api:
+  image:
+    repository: ghcr.io/rickdevma100/lang-learn-api
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+redis:
+  image: redis/redis-stack
+  tag: 7.4.0-v8
+  storageSize: 5Gi
+  storageClass: microk8s-hostpath
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+sharedPlatform:
+  namespace: lang-learn-platform
+  fallbackNamespace: lang-learn
+  inferenceUrl: "http://lang-learn-inference-predictor.lang-learn-platform.svc.cluster.local"
+  externalLlmUrl: "http://192.168.2.1:9090"
+
+quota:
+  requestsCpu: "2"
+  requestsMemory: "4Gi"
+  limitsCpu: "4"
+  limitsMemory: "8Gi"
+  pvcs: "4"
+
+cronWorkflow:
+  enabled: true
+  schedule: "0 2 * * *"
+  targetLevel: "A2"
+  minPendingPapers: 5
+  inferenceImage: "ghcr.io/rickdevma100/inference:latest"
+
+monitoring:
+  enabled: true
+
+prompts:
+  scenario_dialogue: |
+    Generate a natural German conversation between exactly two people, including their English translations.
+
+    Requirements:
+    - Alternate clearly between Person A and Person B.
+    - For each turn, write the German sentence first, followed immediately by its English translation on the next line starting with "Translation: ".
+    - Each dialogue turn must contain at least 7 words.
+    - The conversation must contain at least 20 conversational turns in total (10 turns for Person A and 10 turns for Person B).
+    - Use simple and natural German suitable for A1-A2 level learners.
+    - Do NOT number the turns.
+
+    Specific Scenario for this conversation:
+    {scenario}
+
+    Start the conversation now:
+    Person A:
+  explain_word: |
+    You are a German language expert. Explain the German word "{word}" for a beginner learner.
+    Respond with ONLY a JSON object with keys "word", "part_of_speech", "meaning", "examples", and "synonyms".
+    Now explain the word "{word}":
+  practice_check: |
+    You are a German language tutor checking a student's practice answer for {level}-level German about "{scenario}" ({speaker}).
+    Context: {preceding_context}
+    Expected meaning: "{expected_english}"
+    Student wrote: "{user_text}"
+    Return ONLY a JSON object with keys grammar_ok, on_topic, feedback, corrected_text, score.

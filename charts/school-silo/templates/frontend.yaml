@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    app: frontend
+    {{- include "school-silo.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+        {{- include "school-silo.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: frontend-sa
+      automountServiceAccountToken: false
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy | default "Always" }}
+          ports:
+            - containerPort: {{ .Values.frontend.port | default 3000 }}
+          env:
+            - name: TENANT_NAMESPACE
+              value: {{ .Values.namespace | default .Release.Namespace | quote }}
+            - name: SCHOOL_API_URL
+              value: {{ printf "http://lang-learn-api.%s.svc.cluster.local:%d" (.Values.namespace | default .Release.Namespace) (.Values.api.port | default 8000 | int) | quote }}
+            - name: INFERENCE_API_URL
+              value: {{ .Values.sharedPlatform.inferenceUrl | quote }}
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    app: frontend
+    {{- include "school-silo.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: {{ .Values.frontend.port | default 3000 }}
+      protocol: TCP
+---
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-ingress
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "school-silo.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+spec:
+  ingressClassName: {{ .Values.ingress.ingressClassName | default "public" }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+{{- end }}
