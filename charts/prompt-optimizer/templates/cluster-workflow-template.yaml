@@ -1,0 +1,243 @@
+{{- if or (not (hasKey .Values "workflow")) .Values.workflow.enabled }}
+{{- $optImage := printf "%s:%s" .Values.image.repository (.Values.image.tag | default "latest") -}}
+{{- if and .Values.optimizer .Values.optimizer.image -}}
+  {{- $optImage = printf "%s:%s" (.Values.optimizer.image.repository | default .Values.image.repository) (.Values.optimizer.image.tag | default .Values.image.tag) -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-synchronization-limits
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "prompt-optimizer.labels" . | nindent 4 }}
+data:
+  # Fair-share concurrency lock: at most 1 prompt optimization workflow across tenants at a time
+  llm-batch-lock: {{ if and .Values.workflow .Values.workflow.semaphoreLimit }}{{ .Values.workflow.semaphoreLimit | quote }}{{ else }}"1"{{ end }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterWorkflowTemplate
+metadata:
+  name: prompt-optimizer-dag
+  labels:
+    {{- include "prompt-optimizer.labels" . | nindent 4 }}
+spec:
+  serviceAccountName: prompt-optimizer
+  podMetadata:
+    labels:
+      app: prompt-optimizer
+      app.kubernetes.io/name: prompt-optimizer
+      app.kubernetes.io/part-of: lang-learn
+  # Fair-share concurrency lock across school namespaces (replaces in-memory _is_optimizing)
+  synchronization:
+    semaphore:
+      configMapKeyRef:
+        name: workflow-synchronization-limits
+        key: llm-batch-lock
+
+  # Auto-cleanup completed workflow pods after 24h (48h on failure)
+  ttlStrategy:
+    secondsAfterCompletion: 86400
+    secondsAfterSuccess: 86400
+    secondsAfterFailure: 172800
+
+  # Guaranteed HTML email report whether the workflow succeeds or fails
+  onExit: exit-email-handler
+
+  arguments:
+    parameters:
+      - name: trigger_alert
+        value: "ManualTrigger"
+      - name: language
+        value: "German"
+      - name: level
+        value: "A2"
+
+  entrypoint: optimize-prompt-dag
+
+  templates:
+    # -------------------------------------------------------------------------
+    # Main DAG Definition
+    # -------------------------------------------------------------------------
+    - name: optimize-prompt-dag
+      dag:
+        tasks:
+          - name: load-and-sanitize
+            template: step-load-sanitize
+
+          - name: benchmark-candidates
+            dependencies: [load-and-sanitize]
+            template: step-benchmark
+            arguments:
+              artifacts:
+                - name: base-prompt
+                  from: "{{`{{tasks.load-and-sanitize.outputs.artifacts.base-prompt}}`}}"
+                - name: scenarios
+                  from: "{{`{{tasks.load-and-sanitize.outputs.artifacts.scenarios}}`}}"
+
+          - name: rewrite-and-validate
+            dependencies: [benchmark-candidates]
+            when: "{{`{{tasks.benchmark-candidates.outputs.parameters.should_update}}`}} == true"
+            template: step-rewrite-validate
+            arguments:
+              artifacts:
+                - name: base-prompt
+                  from: "{{`{{tasks.load-and-sanitize.outputs.artifacts.base-prompt}}`}}"
+                - name: ranked-results
+                  from: "{{`{{tasks.benchmark-candidates.outputs.artifacts.ranked-results}}`}}"
+
+          - name: patch-school-configmap
+            dependencies: [rewrite-and-validate]
+            when: "{{`{{tasks.benchmark-candidates.outputs.parameters.should_update}}`}} == true"
+            template: step-apply-configmap
+            arguments:
+              artifacts:
+                - name: new-prompt
+                  from: "{{`{{tasks.rewrite-and-validate.outputs.artifacts.new-prompt}}`}}"
+
+    # -------------------------------------------------------------------------
+    # Step 1: Load & Sanitize School Prompt + Fetch Recent Scenarios from Redis
+    # -------------------------------------------------------------------------
+    - name: step-load-sanitize
+      container:
+        image: {{ $optImage | quote }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
+        command: [python, -m, app.workflow_steps, load]
+        env:
+          - name: NAMESPACE
+            value: "{{`{{workflow.namespace}}`}}"
+          - name: TENANT_TAG
+            value: "{{`{{workflow.namespace}}`}}"
+          - name: REDIS_HOST
+            value: {{ .Values.config.redisHost | quote }}
+          - name: REDIS_PORT
+            value: {{ .Values.config.redisPort | quote }}
+        volumeMounts:
+          - name: school-prompts
+            mountPath: /etc/prompts
+            readOnly: true
+      volumes:
+        - name: school-prompts
+          configMap:
+            name: prompts
+      outputs:
+        artifacts:
+          - name: base-prompt
+            path: /tmp/base_prompt.txt
+          - name: scenarios
+            path: /tmp/scenarios.json
+
+    # -------------------------------------------------------------------------
+    # Step 2: Benchmark Candidate Prompts & Log to MLflow
+    # -------------------------------------------------------------------------
+    - name: step-benchmark
+      retryStrategy:
+        limit: 2
+        retryPolicy: "OnError"
+        backoff:
+          duration: "15s"
+          factor: 2
+      inputs:
+        artifacts:
+          - name: base-prompt
+            path: /tmp/base_prompt.txt
+          - name: scenarios
+            path: /tmp/scenarios.json
+      container:
+        image: {{ $optImage | quote }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
+        command: [python, -m, app.workflow_steps, benchmark]
+        env:
+          - name: NAMESPACE
+            value: "{{`{{workflow.namespace}}`}}"
+          - name: INFERENCE_SERVICE_URL
+            value: {{ .Values.config.inferenceServiceUrl | quote }}
+          - name: MLFLOW_TRACKING_URI
+            value: {{ .Values.config.mlflowTrackingUri | quote }}
+          - name: MIN_SCORE_IMPROVEMENT
+            value: {{ .Values.config.minScoreImprovement | quote }}
+      outputs:
+        parameters:
+          - name: should_update
+            valueFrom:
+              path: /tmp/should_update.txt
+          - name: improvement
+            valueFrom:
+              path: /tmp/improvement.txt
+        artifacts:
+          - name: ranked-results
+            path: /tmp/ranked_results.json
+          - name: prompt-quality-metrics
+            path: /app/metrics/prompt_quality.json
+
+    # -------------------------------------------------------------------------
+    # Step 3: LLM Prompt Rewrite & Format Constraint Validation
+    # -------------------------------------------------------------------------
+    - name: step-rewrite-validate
+      retryStrategy:
+        limit: 2
+      inputs:
+        artifacts:
+          - name: base-prompt
+            path: /tmp/base_prompt.txt
+          - name: ranked-results
+            path: /tmp/ranked_results.json
+      container:
+        image: {{ $optImage | quote }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
+        command: [python, -m, app.workflow_steps, rewrite]
+        env:
+          - name: INFERENCE_SERVICE_URL
+            value: {{ .Values.config.inferenceServiceUrl | quote }}
+      outputs:
+        artifacts:
+          - name: new-prompt
+            path: /tmp/new_prompt.txt
+
+    # -------------------------------------------------------------------------
+    # Step 4: Patch School Namespace ConfigMap (Zero LLM Downtime)
+    # -------------------------------------------------------------------------
+    - name: step-apply-configmap
+      inputs:
+        artifacts:
+          - name: new-prompt
+            path: /tmp/new_prompt.txt
+      container:
+        image: {{ $optImage | quote }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
+        command: [python, -m, app.workflow_steps, apply]
+        env:
+          - name: NAMESPACE
+            value: "{{`{{workflow.namespace}}`}}"
+          - name: PROMPT_CONFIGMAP_NAME
+            value: "prompts"
+
+    # -------------------------------------------------------------------------
+    # Step 5 (onExit): Send HTML Optimization Report Email
+    # -------------------------------------------------------------------------
+    - name: exit-email-handler
+      container:
+        image: {{ $optImage | quote }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
+        command: [python, -m, app.workflow_steps, report]
+        env:
+          - name: NAMESPACE
+            value: "{{`{{workflow.namespace}}`}}"
+          - name: TRIGGER_ALERT
+            value: "{{`{{workflow.parameters.trigger_alert}}`}}"
+          - name: WORKFLOW_STATUS
+            value: "{{`{{workflow.status}}`}}"
+          - name: ADMIN_EMAIL
+            value: {{ .Values.email.adminEmail | quote }}
+          - name: SMTP_HOST
+            value: {{ .Values.email.smtpHost | quote }}
+          - name: SMTP_PORT
+            value: {{ .Values.email.smtpPort | quote }}
+          - name: SMTP_USER
+            value: {{ .Values.email.smtpUser | quote }}
+          - name: SMTP_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.email.secretName }}
+                key: {{ .Values.email.secretKey }}
+                optional: true
+{{- end }}

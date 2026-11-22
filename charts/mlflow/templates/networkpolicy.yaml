@@ -1,0 +1,68 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mlflow-postgres-netpol
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "mlflow.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "mlflow.postgres.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "mlflow.server.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 5432
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mlflow-tracking-netpol
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "mlflow.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "mlflow.server.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prompt-optimizer
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress
+      ports:
+        - protocol: TCP
+          port: {{ .Values.mlflow.port | default 5000 }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "mlflow.postgres.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app: minio
+      ports:
+        - protocol: TCP
+          port: 9000
+    # Startup pip install (mlflow / psycopg2-binary)
+    - ports:
+        - protocol: TCP
+          port: 443

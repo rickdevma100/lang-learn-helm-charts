@@ -11,6 +11,7 @@ spec:
     receiver: default-email
     groupBy:
       - alertname
+      - namespace
       - endpoint
       - language
       - level
@@ -44,8 +45,8 @@ spec:
 
     - name: prompt-optimizer
       webhookConfigs:
-        - url: "http://lang-learn-prompt-optimizer.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local:8000/webhook"
-          sendResolved: true
+        - url: {{ .Values.monitoring.promptOptimizerWebhookUrl | default "http://alertmanager-eventsource-svc.argo-events.svc.cluster.local:12000/webhook" | quote }}
+          sendResolved: false
       emailConfigs:
         - to: {{ .Values.monitoring.adminEmail | quote }}
           from: {{ .Values.monitoring.smtpFrom | quote }}

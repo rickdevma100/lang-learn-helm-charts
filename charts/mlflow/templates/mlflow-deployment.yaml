@@ -17,6 +17,8 @@ spec:
         {{- include "mlflow.labels" . | nindent 8 }}
         {{- include "mlflow.server.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: mlflow-sa
+      automountServiceAccountToken: false
       containers:
         - name: mlflow
           image: {{ .Values.mlflow.image }}

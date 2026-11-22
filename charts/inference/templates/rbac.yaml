@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: inference-sa
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" . | nindent 4 }}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: model-loader-sa
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" . | nindent 4 }}
+automountServiceAccountToken: false
+---
+# Read-only role for school teachers / auditors (bound per school namespace via RoleBinding)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lang-learn-school-viewer
+  labels:
+    {{- include "inference.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services", "configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows", "cronworkflows"]
+    verbs: ["get", "list", "watch"]
+---
+# School namespace operator role (can trigger workflows & edit school prompts; no Secrets/NetworkPolicy access)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lang-learn-school-operator
+  labels:
+    {{- include "inference.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["prompts"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows", "cronworkflows"]
+    verbs: ["get", "list", "watch", "create", "delete"]

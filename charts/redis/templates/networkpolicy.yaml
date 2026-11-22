@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-stack-netpol
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: "{{ .Values.name }}"
+spec:
+  podSelector:
+    matchLabels:
+      app: "{{ .Values.name }}"
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # 1. Database port 6379: ONLY inference-predictor & prompt-optimizer in this namespace
+    - from:
+        - podSelector:
+            matchLabels:
+              app: isvc.lang-learn-inference-predictor
+        - podSelector:
+            matchLabels:
+              app: prompt-optimizer
+      ports:
+        - protocol: TCP
+          port: {{ .Values.redis_stack.redis_server_port | default 6379 }}
+    # 2. RedisInsight UI port 8001 (NodePort 32247): Keep accessible from browser
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.redis_stack.redis_insight_port | default 8001 }}
+  egress: []

@@ -1,0 +1,129 @@
+{{- if or (not (hasKey .Values "argoEvents")) .Values.argoEvents.enabled }}
+{{- $eventsNs := "argo-events" -}}
+{{- if and .Values.argoEvents .Values.argoEvents.namespace -}}
+  {{- $eventsNs = .Values.argoEvents.namespace -}}
+{{- end -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo-events-sensor-sa
+  namespace: {{ $eventsNs }}
+  labels:
+    {{- include "prompt-optimizer.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argo-events-workflow-submitter
+  labels:
+    {{- include "prompt-optimizer.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows", "workflowtemplates", "clusterworkflowtemplates"]
+    verbs: ["create", "get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argo-events-workflow-submitter-binding
+  labels:
+    {{- include "prompt-optimizer.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: argo-events-sensor-sa
+    namespace: {{ $eventsNs }}
+roleRef:
+  kind: ClusterRole
+  name: argo-events-workflow-submitter
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: alertmanager
+  namespace: {{ $eventsNs }}
+  labels:
+    {{- include "prompt-optimizer.labels" . | nindent 4 }}
+spec:
+  service:
+    ports:
+      - port: 12000
+        targetPort: 12000
+  webhook:
+    alertmanager-webhook:
+      port: "12000"
+      endpoint: /webhook
+      method: POST
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: prompt-optimizer-sensor
+  namespace: {{ $eventsNs }}
+  labels:
+    {{- include "prompt-optimizer.labels" . | nindent 4 }}
+spec:
+  template:
+    serviceAccountName: argo-events-sensor-sa
+  dependencies:
+    - name: alertmanager-dep
+      eventSourceName: alertmanager
+      eventName: alertmanager-webhook
+      filters:
+        data:
+          - path: body.status
+            type: string
+            value:
+              - "firing"
+          - path: body.commonLabels.action
+            type: string
+            value:
+              - "optimize_prompt"
+  triggers:
+    - template:
+        name: submit-school-prompt-optimizer
+        k8s:
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: prompt-opt-
+                namespace: {{ .Values.namespace | quote }}
+              spec:
+                workflowTemplateRef:
+                  clusterScope: true
+                  name: prompt-optimizer-dag
+                arguments:
+                  parameters:
+                    - name: trigger_alert
+                      value: "CEFRPromptDegraded"
+                    - name: language
+                      value: "German"
+                    - name: level
+                      value: "A2"
+          parameters:
+            # 1. Route Workflow execution into the specific school's namespace
+            - src:
+                dependencyName: alertmanager-dep
+                dataKey: body.commonLabels.namespace
+                value: {{ .Values.namespace }}
+              dest: metadata.namespace
+            # 2. Pass Alert Metadata
+            - src:
+                dependencyName: alertmanager-dep
+                dataKey: body.commonLabels.alertname
+                value: ManualTrigger
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: alertmanager-dep
+                dataKey: body.commonLabels.language
+                value: German
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: alertmanager-dep
+                dataKey: body.commonLabels.level
+                value: A2
+              dest: spec.arguments.parameters.2.value
+{{- end }}

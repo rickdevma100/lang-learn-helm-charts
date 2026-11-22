@@ -14,6 +14,8 @@ spec:
   backoffLimit: 3
   template:
     spec:
+      serviceAccountName: model-loader-sa
+      automountServiceAccountToken: false
       restartPolicy: OnFailure
       tolerations:
         - key: "node.kubernetes.io/disk-pressure"

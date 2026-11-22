@@ -6,16 +6,25 @@ metadata:
   labels:
     {{- include "prompt-optimizer.labels" . | nindent 4 }}
 rules:
-  # Allow patching the prompts ConfigMap (to update scenario_dialogue.txt)
+  # 1. Patch only this namespace's prompts ConfigMap (to update scenario_dialogue.txt)
   - apiGroups: [""]
     resources: ["configmaps"]
     resourceNames: ["prompts"]
     verbs: ["get", "patch"]
-  # Allow restarting the inference deployment (rolling restart via annotation patch)
+  # 2. Required by Argo Workflows executor to report task outputs & status
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflowtaskresults"]
+    verbs: ["create", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "patch"]
+  {{- if and .Values.legacyDeployment .Values.legacyDeployment.enabled }}
+  # Legacy mode only: allow restarting inference deployment
   - apiGroups: ["apps"]
     resources: ["deployments"]
     resourceNames: ["lang-learn-inference-predictor"]
     verbs: ["get", "patch"]
+  {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

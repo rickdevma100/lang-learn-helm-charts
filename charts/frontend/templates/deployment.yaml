@@ -17,6 +17,8 @@ spec:
         app: frontend
         {{- include "frontend.labels" . | nindent 8 }}
     spec:
+      serviceAccountName: frontend-sa
+      automountServiceAccountToken: false
       containers:
         - name: frontend
           image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"

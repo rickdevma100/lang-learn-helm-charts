@@ -380,6 +380,7 @@ prompts:
 # ---------------------------------------------------------------------------
 monitoring:
   enabled: true
+  promptOptimizerWebhookUrl: "http://alertmanager-eventsource-svc.argo-events.svc.cluster.local:12000/webhook"
 
   adminEmail: "rickdev.ma100@gmail.com"
 

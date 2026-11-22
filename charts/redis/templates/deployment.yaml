@@ -15,6 +15,8 @@ spec:
       labels:
         app: "{{ .Values.name }}"
     spec:
+      serviceAccountName: redis-sa
+      automountServiceAccountToken: false
       containers:
       - name: "{{ .Values.name }}"
         image: {{ .Values.redis_stack.image }}:{{ .Values.redis_stack.tag }}

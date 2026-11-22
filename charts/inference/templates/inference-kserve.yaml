@@ -10,6 +10,8 @@ metadata:
     serving.kserve.io/autoscalerClass: hpa
 spec:
   predictor:
+    serviceAccountName: inference-sa
+    automountServiceAccountToken: false
     minReplicas: {{ .Values.inference.minReplicas }}
     maxReplicas: {{ .Values.inference.maxReplicas }}
     containers:

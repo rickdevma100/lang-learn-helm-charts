@@ -19,6 +19,8 @@ spec:
         {{- include "mlflow.labels" . | nindent 8 }}
         {{- include "mlflow.postgres.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: mlflow-postgres-sa
+      automountServiceAccountToken: false
       containers:
         - name: postgres
           image: {{ .Values.postgres.image }}

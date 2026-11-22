@@ -64,9 +64,22 @@ probes:
     initialDelaySeconds: 10
     periodSeconds: 30
 
-# Horizontal Pod Autoscaler
+# Horizontal Pod Autoscaler (only used when legacyDeployment.enabled=true)
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilization: 80
+
+# Event-driven Argo Workflows DAG & Argo Events configuration (Plan 2)
+workflow:
+  enabled: true
+  semaphoreLimit: "1"
+
+argoEvents:
+  enabled: true
+  namespace: argo-events
+
+# Legacy always-on FastAPI server (replaced by Argo Workflows DAG)
+legacyDeployment:
+  enabled: false

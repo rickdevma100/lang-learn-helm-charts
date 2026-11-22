@@ -1,0 +1,149 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: minio-netpol
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: minio
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: mlflow-tracking
+        - podSelector:
+            matchLabels:
+              app: prompt-optimizer
+        - podSelector:
+            matchLabels:
+              job-name: model-loader
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: argo
+      ports:
+        - protocol: TCP
+          port: {{ .Values.minio.service.port | default 9000 }}
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: model-loader-netpol
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      job-name: model-loader
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: minio
+      ports:
+        - protocol: TCP
+          port: {{ .Values.minio.service.port | default 9000 }}
+    # apt-get (80) + pip/git clone from GitHub (443)
+    - ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: inference-predictor-netpol
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: isvc.lang-learn-inference-predictor
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - podSelector:
+            matchLabels:
+              app: prompt-optimizer
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    # 1. Redis cache
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis-stack
+      ports:
+        - protocol: TCP
+          port: 6379
+    # 2. Mac Host External LLM (192.168.2.1:9090)
+    - to:
+        - ipBlock:
+            cidr: 192.168.2.1/32
+      ports:
+        - protocol: TCP
+          port: 9090
+    # 3. External HTTPS (443) for Microsoft Edge TTS (edge_tts)
+    - ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "inference.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
