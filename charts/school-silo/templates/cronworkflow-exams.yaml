@@ -1,4 +1,14 @@
 {{- if .Values.cronWorkflow.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.sharedPlatform.semaphoreConfigMap | default "workflow-synchronization-limits" }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "school-silo.labels" . | nindent 4 }}
+data:
+  llm-batch-lock: "1"
+---
 apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
