@@ -14,7 +14,7 @@ frontend:
   port: 3000
   resources:
     requests:
-      cpu: 100m
+      cpu: 25m
       memory: 128Mi
     limits:
       cpu: 500m
@@ -29,8 +29,8 @@ api:
   port: 8000
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 50m
+      memory: 192Mi
     limits:
       cpu: 500m
       memory: 512Mi
@@ -42,8 +42,8 @@ redis:
   storageClass: microk8s-hostpath
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 25m
+      memory: 192Mi
     limits:
       cpu: 500m
       memory: 1Gi
@@ -53,6 +53,12 @@ sharedPlatform:
   fallbackNamespace: lang-learn
   inferenceUrl: "http://lang-learn-inference-predictor.lang-learn-platform.svc.cluster.local"
   externalLlmUrl: "http://192.168.2.1:9090"
+
+artifactStorage:
+  createSecret: true
+  secretName: dvc-credentials
+  accessKey: minioadmin
+  secretKey: minioadmin
 
 quota:
   requestsCpu: "2"
